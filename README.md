@@ -20,10 +20,15 @@ Você precisa de:
 3. **O GoLiveBypass abre sozinho.** Nele:
    - entre com a sua conta **Proton**;
    - clique em **Ativar**. Na primeira vez o Windows pede administrador pra instalar o **WireSock**, que é o motor da VPN. Pode aceitar.
-4. **Volte pro instalador.** Ele fica esperando na tela *"Entre na sua conta Proton"*. Assim que a VPN liga, aparece **"VPN ativada!"** e duas opções, já marcadas:
-   - ☑ **Iniciar com o Windows**: ao ligar o PC, o GoLiveBypass sobe escondido na bandeja, liga a VPN e **só depois** abre o Discord por ela.
+4. **Volte pro instalador.** Ele fica esperando na tela *"Entre na sua conta Proton"*. Assim que a VPN liga, aparece a pergunta:
+   > **Gostaria que o GoLiveBypass iniciasse antes do Discord quando o Windows ligar?**
+
+   Responda **Sim** (recomendado). Isso marca as duas opções da tela:
+   - ☑ **Iniciar com o Windows**: ao ligar o PC, o GoLiveBypass sobe escondido na bandeja, liga a VPN e **só depois** abre o Discord por ela. Você já entra no Discord com o bypass rodando.
    - ☑ **Impedir o Discord de abrir sozinho com o Windows**: assim o Discord nunca abre antes da VPN, porque quem abre ele é o GoLiveBypass.
-5. **Concluir.** Pronto.
+
+   Se responder **Não**, nada muda na inicialização. Antes de avançar ainda dá pra marcar ou desmarcar as caixinhas.
+5. **Avançar → Concluir.** Pronto.
 
 ### No dia a dia
 

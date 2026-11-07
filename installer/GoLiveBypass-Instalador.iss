@@ -3,7 +3,8 @@
 ; O build.ps1 na raiz do repositório faz tudo (compila o app a partir da tag oficial e chama o ISCC).
 ;
 ; Fluxo: instala -> abre o GoLiveBypass para o login no Proton -> espera a VPN ser ativada ->
-; só então oferece "Iniciar com o Windows" e "Impedir o Discord de abrir sozinho".
+; só então pergunta (modal Sim/Não) se o GoLiveBypass deve iniciar antes do Discord. A resposta marca
+; as caixinhas "Iniciar com o Windows" e "Impedir o Discord de abrir sozinho", aplicadas ao avançar.
 ; Modo silencioso: /VERYSILENT [/INICIAR=1] [/BLOQUEARDISCORD=1]
 
 #ifndef AppVersion
@@ -81,7 +82,7 @@ var
   ChkIniciar, ChkBloquearDiscord: TNewCheckBox;
   BtnAbrir: TNewButton;
   TimerId: LongWord;
-  JaAtivo: Boolean;
+  JaPerguntou: Boolean;
 
 function SetTimer(hWnd, nIDEvent, uElapse, lpTimerFunc: LongWord): LongWord; external 'SetTimer@user32.dll stdcall';
 function KillTimer(hWnd, uIDEvent: LongWord): BOOL; external 'KillTimer@user32.dll stdcall';
@@ -189,21 +190,52 @@ end;
 
 { ---------- página "entre no Proton" ---------- }
 
+procedure PararTimer();
+begin
+  if TimerId <> 0 then
+  begin
+    KillTimer(0, TimerId);
+    TimerId := 0;
+  end;
+end;
+
+procedure PerguntarIniciarAntes();
+begin
+  JaPerguntou := True;
+  ChkIniciar.Enabled := True;
+  ChkBloquearDiscord.Enabled := True;
+  { O modal só deixa a escolha óbvia: o resultado vai para as caixinhas, que a pessoa ainda pode mudar. }
+  if MsgBox('A VPN está ativa!' + #13#10#13#10 +
+            'Gostaria que o GoLiveBypass iniciasse antes do Discord quando o Windows ligar?' + #13#10#13#10 +
+            'Se sim: ao ligar o PC, o GoLiveBypass sobe primeiro e liga a VPN, e só depois abre o Discord. ' +
+            'Você já entra no Discord com o bypass rodando, pronto para compartilhar a tela. ' +
+            '(O Discord deixa de abrir sozinho com o Windows: quem abre ele é o GoLiveBypass.)' + #13#10#13#10 +
+            'Se não: nada muda na inicialização. Use o atalho "Discord com VPN" quando quiser.' + #13#10#13#10 +
+            'Dá para mudar depois nas caixinhas desta tela ou no GoLiveBypass (ícone da bandeja > Iniciar com Windows).',
+            mbConfirmation, MB_YESNO) = IDYES then
+  begin
+    ChkIniciar.Checked := True;
+    ChkBloquearDiscord.Checked := True;
+    LblStatus.Caption := 'VPN ativada! O GoLiveBypass vai iniciar antes do Discord.';
+  end
+  else
+  begin
+    ChkIniciar.Checked := False;
+    ChkBloquearDiscord.Checked := False;
+    LblStatus.Caption := 'VPN ativada! Inicialização do Windows sem mudanças.';
+  end;
+  LblStatus.Font.Color := clGreen;
+  WizardForm.NextButton.Caption := SetupMessage(msgButtonNext);
+end;
+
 procedure AtualizarPagina();
 begin
+  if JaPerguntou then Exit;
   if VpnJaAtivada() then
   begin
-    LblStatus.Caption := 'VPN ativada! Agora escolha:';
-    LblStatus.Font.Color := clGreen;
-    if not JaAtivo then
-    begin
-      JaAtivo := True;
-      ChkIniciar.Enabled := True;
-      ChkBloquearDiscord.Enabled := True;
-      ChkIniciar.Checked := True;
-      ChkBloquearDiscord.Checked := True;
-    end;
-    WizardForm.NextButton.Caption := SetupMessage(msgButtonNext);
+    { Para o timer antes do modal: senão ele dispara de novo enquanto a pergunta está aberta. }
+    PararTimer();
+    PerguntarIniciarAntes();
   end
   else
   begin
@@ -216,15 +248,6 @@ end;
 procedure TimerProc(H, Msg, IdEvent, Time: LongWord);
 begin
   AtualizarPagina();
-end;
-
-procedure PararTimer();
-begin
-  if TimerId <> 0 then
-  begin
-    KillTimer(0, TimerId);
-    TimerId := 0;
-  end;
 end;
 
 procedure BtnAbrirClick(Sender: TObject);
@@ -249,7 +272,7 @@ begin
     'O GoLiveBypass abriu. Nele:' + #13#10 +
     '1. Entre com a sua conta Proton (a grátis serve).' + #13#10 +
     '2. Clique em Ativar. Na primeira vez o Windows pede administrador para instalar o WireSock (o motor da VPN).' + #13#10 +
-    'Assim que a VPN ligar, as opções abaixo são liberadas.';
+    'Assim que a VPN ligar, o instalador pergunta se o GoLiveBypass deve iniciar antes do Discord.';
 
   BtnAbrir := TNewButton.Create(PaginaLogin);
   BtnAbrir.Parent := PaginaLogin.Surface;
@@ -269,7 +292,7 @@ begin
   ChkIniciar.Top := LblStatus.Top + ScaleY(26);
   ChkIniciar.Width := PaginaLogin.SurfaceWidth;
   ChkIniciar.Height := ScaleY(20);
-  ChkIniciar.Caption := 'Iniciar com o Windows (a VPN sobe primeiro e depois abre o Discord por ela)';
+  ChkIniciar.Caption := 'Iniciar com o Windows (o GoLiveBypass liga a VPN e depois abre o Discord)';
   ChkIniciar.Enabled := False;
 
   ChkBloquearDiscord := TNewCheckBox.Create(PaginaLogin);
@@ -285,9 +308,14 @@ procedure CurPageChanged(CurPageID: Integer);
 begin
   if CurPageID = PaginaLogin.ID then
   begin
-    AtualizarPagina();
-    if TimerId = 0 then
-      TimerId := SetTimer(0, 0, 2000, CreateCallback(@TimerProc));
+    if not JaPerguntou then
+    begin
+      LblStatus.Caption := 'Aguardando você entrar no Proton e clicar em Ativar...';
+      WizardForm.NextButton.Caption := 'Pular';
+      { O modal sai pelo timer, com a página já desenhada na tela. }
+      if TimerId = 0 then
+        TimerId := SetTimer(0, 0, 1500, CreateCallback(@TimerProc));
+    end;
   end
   else
     PararTimer();
