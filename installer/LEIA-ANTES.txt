@@ -1,0 +1,23 @@
+﻿GoLiveBypass - instalador NÃO OFICIAL
+
+Este instalador coloca o GoLiveBypass (projeto original: github.com/bezumiya/GoLiveBypass, licença GPLv3) no seu PC e cria o atalho "Discord com VPN".
+
+O que ele faz:
+- Instala o GoLiveBypass em %LOCALAPPDATA%\Programs\GoLiveBypass (só para o seu usuário, sem administrador).
+- Cria o atalho "Discord com VPN" na área de trabalho e no Menu Iniciar.
+- Se você marcar, coloca o GoLiveBypass para iniciar com o Windows: a VPN sobe e o Discord abre já por ela.
+
+Como funciona a VPN:
+- O GoLiveBypass passa SÓ o Discord por uma VPN WireGuard (ProtonVPN, conta grátis serve). O resto do PC continua na sua internet normal.
+- Na primeira ativação o próprio app baixa e instala o WireSock oficial (o motor da VPN). O Windows vai pedir administrador nessa hora.
+- Você precisa entrar com a sua conta Proton uma vez, dentro do app.
+
+Primeira vez:
+1. Abra o GoLiveBypass, entre na conta Proton e clique em Ativar.
+2. Pronto. Dali em diante use o atalho "Discord com VPN".
+
+Importante: para fechar use "Sair" no ícone da bandeja. "Desativar" desliga a VPN de vez, e aí o atalho só abre o app sem ligar a VPN (é só ativar de novo).
+
+O app se atualiza sozinho pelas releases oficiais do bezumiya/GoLiveBypass.
+
+Desinstalar: Configurações do Windows > Aplicativos > GoLiveBypass (Discord com VPN). Seus dados de login ficam em %LOCALAPPDATA%\GoLiveBypass; apague essa pasta se quiser limpar tudo.
