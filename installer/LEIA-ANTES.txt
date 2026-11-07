@@ -2,22 +2,18 @@
 
 Este instalador coloca o GoLiveBypass (projeto original: github.com/bezumiya/GoLiveBypass, licença GPLv3) no seu PC e cria o atalho "Discord com VPN".
 
-O que ele faz:
-- Instala o GoLiveBypass em %LOCALAPPDATA%\Programs\GoLiveBypass (só para o seu usuário, sem administrador).
-- Cria o atalho "Discord com VPN" na área de trabalho e no Menu Iniciar.
-- Se você marcar, coloca o GoLiveBypass para iniciar com o Windows: a VPN sobe e o Discord abre já por ela.
+Como vai ser:
+1. Ele instala o GoLiveBypass em %LOCALAPPDATA%\Programs\GoLiveBypass (só para o seu usuário, sem administrador) e cria o atalho "Discord com VPN" na área de trabalho e no Menu Iniciar.
+2. Em seguida abre o GoLiveBypass: entre com a sua conta Proton (a grátis serve) e clique em Ativar. Na primeira vez o Windows pede administrador para instalar o WireSock (o motor da VPN).
+3. Assim que a VPN ligar, o instalador libera duas opções:
+   - Iniciar com o Windows: a VPN sobe primeiro e depois o Discord abre por ela.
+   - Impedir o Discord de abrir sozinho com o Windows, para ele não abrir antes da VPN.
 
 Como funciona a VPN:
-- O GoLiveBypass passa SÓ o Discord por uma VPN WireGuard (ProtonVPN, conta grátis serve). O resto do PC continua na sua internet normal.
-- Na primeira ativação o próprio app baixa e instala o WireSock oficial (o motor da VPN). O Windows vai pedir administrador nessa hora.
-- Você precisa entrar com a sua conta Proton uma vez, dentro do app.
-
-Primeira vez:
-1. Abra o GoLiveBypass, entre na conta Proton e clique em Ativar.
-2. Pronto. Dali em diante use o atalho "Discord com VPN".
+- O GoLiveBypass passa SÓ o Discord por uma VPN WireGuard (ProtonVPN). O resto do PC continua na sua internet normal.
 
 Importante: para fechar use "Sair" no ícone da bandeja. "Desativar" desliga a VPN de vez, e aí o atalho só abre o app sem ligar a VPN (é só ativar de novo).
 
 O app se atualiza sozinho pelas releases oficiais do bezumiya/GoLiveBypass.
 
-Desinstalar: Configurações do Windows > Aplicativos > GoLiveBypass (Discord com VPN). Seus dados de login ficam em %LOCALAPPDATA%\GoLiveBypass; apague essa pasta se quiser limpar tudo.
+Desinstalar: Configurações do Windows > Aplicativos > GoLiveBypass (Discord com VPN). Isso também devolve o Discord para iniciar sozinho, se foi o instalador que bloqueou. Seus dados de login ficam em %LOCALAPPDATA%\GoLiveBypass; apague essa pasta se quiser limpar tudo.

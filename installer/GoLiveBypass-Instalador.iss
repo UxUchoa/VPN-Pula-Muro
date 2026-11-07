@@ -1,6 +1,10 @@
 ﻿; Instalador não oficial do GoLiveBypass (https://github.com/bezumiya/GoLiveBypass), GPLv3.
 ; Compile com:  ISCC.exe /DAppVersion=2.0.16 /DSourceExe=C:\caminho\GoLiveBypass-2.0.16.exe GoLiveBypass-Instalador.iss
 ; O build.ps1 na raiz do repositório faz tudo (compila o app a partir da tag oficial e chama o ISCC).
+;
+; Fluxo: instala -> abre o GoLiveBypass para o login no Proton -> espera a VPN ser ativada ->
+; só então oferece "Iniciar com o Windows" e "Impedir o Discord de abrir sozinho".
+; Modo silencioso: /VERYSILENT [/INICIAR=1] [/BLOQUEARDISCORD=1]
 
 #ifndef AppVersion
   #error Passe /DAppVersion=x.y.z para o ISCC
@@ -45,10 +49,9 @@ MinVersion=10.0
 Name: "ptbr"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"
 
 [Messages]
-ptbr.FinishedLabel=Pronto! Na primeira vez:%n%n1. Abra o GoLiveBypass, entre na sua conta Proton e clique em Ativar (o Windows vai pedir administrador para instalar o WireSock, o motor da VPN).%n2. Depois disso é só usar o atalho "Discord com VPN": ele liga a VPN e abre o Discord já por ela.%n%nPara fechar use Sair (botão direito no ícone da bandeja). Não use Desativar, senão o atalho não liga a VPN na próxima vez.
+ptbr.FinishedLabel=Pronto!%n%nDaqui em diante use o atalho "Discord com VPN": ele liga a VPN e abre o Discord já por ela.%n%nPara fechar use Sair (botão direito no ícone da bandeja). Não use Desativar, senão o atalho não liga a VPN na próxima vez.%n%nSe pulou a opção de iniciar com o Windows, dá para ligar depois no GoLiveBypass (ícone da bandeja > Iniciar com Windows).
 
 [Tasks]
-Name: "startup"; Description: "Iniciar com o Windows (a VPN sobe e o Discord abre já por ela, sem abrir a janela do bypass)"; GroupDescription: "Opções:"; Flags: unchecked
 Name: "desktopapp"; Description: "Criar também um atalho do GoLiveBypass (janela de configuração) na área de trabalho"; GroupDescription: "Opções:"; Flags: unchecked
 
 [Files]
@@ -63,14 +66,28 @@ Name: "{autoprograms}\Discord com VPN"; Filename: "{app}\{#AppExe}"; Parameters:
 Name: "{autoprograms}\GoLiveBypass (configurar)"; Filename: "{app}\{#AppExe}"; WorkingDir: "{app}"
 Name: "{autodesktop}\GoLiveBypass (configurar)"; Filename: "{app}\{#AppExe}"; WorkingDir: "{app}"; Tasks: desktopapp
 
-[Registry]
-; Mesmo valor que o "Iniciar com Windows" do próprio app grava, então o toggle da bandeja reconhece.
-Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "{#RunValue}"; ValueData: """{app}\{#AppExe}"" --hidden"; Tasks: startup; Flags: uninsdeletevalue
-
-[Run]
-Filename: "{app}\{#AppExe}"; Description: "Abrir o GoLiveBypass agora para entrar na conta Proton e ativar"; Flags: nowait postinstall skipifsilent
+[UninstallDelete]
+Type: files; Name: "{app}\{#AppExe}.old"
 
 [Code]
+const
+  RunKey = 'Software\Microsoft\Windows\CurrentVersion\Run';
+  ApprovedKey = 'Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run';
+  OwnKey = 'Software\GoLiveBypass-Instalador';
+
+var
+  PaginaLogin: TWizardPage;
+  LblStatus: TNewStaticText;
+  ChkIniciar, ChkBloquearDiscord: TNewCheckBox;
+  BtnAbrir: TNewButton;
+  TimerId: LongWord;
+  JaAtivo: Boolean;
+
+function SetTimer(hWnd, nIDEvent, uElapse, lpTimerFunc: LongWord): LongWord; external 'SetTimer@user32.dll stdcall';
+function KillTimer(hWnd, uIDEvent: LongWord): BOOL; external 'KillTimer@user32.dll stdcall';
+
+{ ---------- processo aberto ---------- }
+
 function GoLiveBypassRodando(const Proprio: String): Boolean;
 var
   Locator, Service, Procs, Proc: Variant;
@@ -122,10 +139,196 @@ begin
   end;
 end;
 
+{ ---------- estado do app ---------- }
+
+function VpnJaAtivada(): Boolean;
+var
+  S: AnsiString;
+begin
+  { bypassEnabled vira true quando a pessoa entra no Proton e ativa pela primeira vez. }
+  Result := False;
+  if LoadStringFromFile(ExpandConstant('{localappdata}\GoLiveBypass\settings.json'), S) then
+    Result := (Pos('"bypassEnabled": true', S) > 0) or (Pos('"bypassEnabled":true', S) > 0);
+end;
+
+procedure AbrirApp();
+var
+  Code: Integer;
+begin
+  ShellExec('', ExpandConstant('{app}\{#AppExe}'), '', ExpandConstant('{app}'), SW_SHOWNORMAL, ewNoWait, Code);
+end;
+
+{ ---------- inicialização ---------- }
+
+procedure LigarInicioComWindows();
+var
+  Atual: AnsiString;
+begin
+  RegWriteStringValue(HKCU, RunKey, '{#RunValue}', '"' + ExpandConstant('{app}\{#AppExe}') + '" --hidden');
+  { Se a pessoa tinha desligado o GoLiveBypass em Aplicativos de inicialização, religa. }
+  if RegQueryBinaryValue(HKCU, ApprovedKey, '{#RunValue}', Atual) and (Length(Atual) > 0) and (Ord(Atual[1]) <> 2) then
+    RegWriteBinaryValue(HKCU, ApprovedKey, '{#RunValue}', #2#0#0#0#0#0#0#0#0#0#0#0);
+  Log('Iniciar com o Windows: ligado');
+end;
+
+procedure BloquearAutostartDiscord();
+var
+  Atual: AnsiString;
+begin
+  { Mesmo interruptor de Configurações > Aplicativos > Inicialização: o Discord pode regravar
+    a entrada dele na Run, mas o Windows continua sem abrir. Byte 03 = desativado. }
+  if RegQueryBinaryValue(HKCU, ApprovedKey, 'Discord', Atual) and (Length(Atual) > 0) and (Ord(Atual[1]) = 3) then
+  begin
+    Log('Autostart do Discord já estava desligado');
+    Exit;
+  end;
+  RegWriteBinaryValue(HKCU, ApprovedKey, 'Discord', #3#0#0#0#0#0#0#0#0#0#0#0);
+  RegWriteDWordValue(HKCU, OwnKey, 'DiscordAutostartBloqueado', 1);
+  Log('Autostart do Discord: bloqueado');
+end;
+
+{ ---------- página "entre no Proton" ---------- }
+
+procedure AtualizarPagina();
+begin
+  if VpnJaAtivada() then
+  begin
+    LblStatus.Caption := 'VPN ativada! Agora escolha:';
+    LblStatus.Font.Color := clGreen;
+    if not JaAtivo then
+    begin
+      JaAtivo := True;
+      ChkIniciar.Enabled := True;
+      ChkBloquearDiscord.Enabled := True;
+      ChkIniciar.Checked := True;
+      ChkBloquearDiscord.Checked := True;
+    end;
+    WizardForm.NextButton.Caption := SetupMessage(msgButtonNext);
+  end
+  else
+  begin
+    LblStatus.Caption := 'Aguardando você entrar no Proton e clicar em Ativar...';
+    LblStatus.Font.Color := clWindowText;
+    WizardForm.NextButton.Caption := 'Pular';
+  end;
+end;
+
+procedure TimerProc(H, Msg, IdEvent, Time: LongWord);
+begin
+  AtualizarPagina();
+end;
+
+procedure PararTimer();
+begin
+  if TimerId <> 0 then
+  begin
+    KillTimer(0, TimerId);
+    TimerId := 0;
+  end;
+end;
+
+procedure BtnAbrirClick(Sender: TObject);
+begin
+  AbrirApp();
+end;
+
+procedure InitializeWizard();
+var
+  Intro: TNewStaticText;
+begin
+  PaginaLogin := CreateCustomPage(wpInstalling, 'Entre na sua conta Proton',
+    'Falta só um passo para a VPN do Discord funcionar.');
+
+  Intro := TNewStaticText.Create(PaginaLogin);
+  Intro.Parent := PaginaLogin.Surface;
+  Intro.AutoSize := False;
+  Intro.WordWrap := True;
+  Intro.Width := PaginaLogin.SurfaceWidth;
+  Intro.Height := ScaleY(84);
+  Intro.Caption :=
+    'O GoLiveBypass abriu. Nele:' + #13#10 +
+    '1. Entre com a sua conta Proton (a grátis serve).' + #13#10 +
+    '2. Clique em Ativar. Na primeira vez o Windows pede administrador para instalar o WireSock (o motor da VPN).' + #13#10 +
+    'Assim que a VPN ligar, as opções abaixo são liberadas.';
+
+  BtnAbrir := TNewButton.Create(PaginaLogin);
+  BtnAbrir.Parent := PaginaLogin.Surface;
+  BtnAbrir.Top := Intro.Top + Intro.Height + ScaleY(4);
+  BtnAbrir.Width := ScaleX(220);
+  BtnAbrir.Height := ScaleY(24);
+  BtnAbrir.Caption := 'Abrir o GoLiveBypass de novo';
+  BtnAbrir.OnClick := @BtnAbrirClick;
+
+  LblStatus := TNewStaticText.Create(PaginaLogin);
+  LblStatus.Parent := PaginaLogin.Surface;
+  LblStatus.Top := BtnAbrir.Top + BtnAbrir.Height + ScaleY(14);
+  LblStatus.Font.Style := [fsBold];
+
+  ChkIniciar := TNewCheckBox.Create(PaginaLogin);
+  ChkIniciar.Parent := PaginaLogin.Surface;
+  ChkIniciar.Top := LblStatus.Top + ScaleY(26);
+  ChkIniciar.Width := PaginaLogin.SurfaceWidth;
+  ChkIniciar.Height := ScaleY(20);
+  ChkIniciar.Caption := 'Iniciar com o Windows (a VPN sobe primeiro e depois abre o Discord por ela)';
+  ChkIniciar.Enabled := False;
+
+  ChkBloquearDiscord := TNewCheckBox.Create(PaginaLogin);
+  ChkBloquearDiscord.Parent := PaginaLogin.Surface;
+  ChkBloquearDiscord.Top := ChkIniciar.Top + ScaleY(24);
+  ChkBloquearDiscord.Width := PaginaLogin.SurfaceWidth;
+  ChkBloquearDiscord.Height := ScaleY(20);
+  ChkBloquearDiscord.Caption := 'Impedir o Discord de abrir sozinho com o Windows (ele abre pelo GoLiveBypass)';
+  ChkBloquearDiscord.Enabled := False;
+end;
+
+procedure CurPageChanged(CurPageID: Integer);
+begin
+  if CurPageID = PaginaLogin.ID then
+  begin
+    AtualizarPagina();
+    if TimerId = 0 then
+      TimerId := SetTimer(0, 0, 2000, CreateCallback(@TimerProc));
+  end
+  else
+    PararTimer();
+end;
+
+function NextButtonClick(CurPageID: Integer): Boolean;
+begin
+  Result := True;
+  if CurPageID = PaginaLogin.ID then
+  begin
+    PararTimer();
+    if ChkIniciar.Enabled and ChkIniciar.Checked then LigarInicioComWindows();
+    if ChkBloquearDiscord.Enabled and ChkBloquearDiscord.Checked then BloquearAutostartDiscord();
+  end;
+end;
+
+procedure DeinitializeSetup();
+begin
+  PararTimer();
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssPostInstall then
+  begin
+    if WizardSilent() then
+    begin
+      if ExpandConstant('{param:INICIAR|0}') = '1' then LigarInicioComWindows();
+      if ExpandConstant('{param:BLOQUEARDISCORD|0}') = '1' then BloquearAutostartDiscord();
+    end
+    else
+      AbrirApp();
+  end;
+end;
+
 function InitializeSetup(): Boolean;
 begin
   Result := EsperarFechar('continuar a instalação', ExpandConstant('{srcexe}'), WizardSilent());
 end;
+
+{ ---------- desinstalação ---------- }
 
 function InitializeUninstall(): Boolean;
 begin
@@ -135,15 +338,18 @@ end;
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var
   Data: String;
+  Marcado: Cardinal;
 begin
   if CurUninstallStep = usPostUninstall then
   begin
-    { O app também pode ter gravado o valor pelo próprio toggle "Iniciar com Windows". }
-    if RegQueryStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', '{#RunValue}', Data) then
+    { Remove a inicialização só se ela aponta para esta instalação (o app também pode ter gravado). }
+    if RegQueryStringValue(HKCU, RunKey, '{#RunValue}', Data) then
       if Pos(Lowercase(ExpandConstant('{app}')), Lowercase(Data)) > 0 then
-        RegDeleteValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', '{#RunValue}');
-    { O auto-update do app deixa o exe antigo como .old ao lado. }
-    DeleteFile(ExpandConstant('{app}\{#AppExe}.old'));
+        RegDeleteValue(HKCU, RunKey, '{#RunValue}');
+    { Devolve o autostart do Discord se fomos nós que bloqueamos. }
+    if RegQueryDWordValue(HKCU, OwnKey, 'DiscordAutostartBloqueado', Marcado) and (Marcado = 1) then
+      RegWriteBinaryValue(HKCU, ApprovedKey, 'Discord', #2#0#0#0#0#0#0#0#0#0#0#0);
+    RegDeleteKeyIncludingSubkeys(HKCU, OwnKey);
     RemoveDir(ExpandConstant('{app}'));
   end;
 end;
