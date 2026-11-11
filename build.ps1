@@ -2,11 +2,12 @@
   Gera o instalador do zero, a partir da tag oficial do bezumiya/GoLiveBypass.
 
   Precisa: Git, Node.js 24+, Go 1.26+ e Inno Setup 6 (ISCC.exe).
-  Uso:     powershell -ExecutionPolicy Bypass -File build.ps1 -Version 2.0.16
-  Saída:   dist\GoLiveBypass-Instalador-<versão>.exe (+ .sha256)
+  Uso:     powershell -ExecutionPolicy Bypass -File build.ps1 -Version 2.0.16 -Rev 3
+  Saída:   dist\GoLiveBypass-Instalador-<versão>-r<rev>.exe (+ .sha256)
 #>
 param(
   [string]$Version = "2.0.16",
+  [string]$Rev = "3",
   [string]$Iscc = "",
   [string]$WorkDir = "$PSScriptRoot\.build"
 )
@@ -45,11 +46,11 @@ try {
 $exe = Join-Path $src "golive-gui\dist-app\GoLiveBypass-$Version.exe"
 if (-not (Test-Path $exe)) { throw "Build não gerou $exe" }
 
-& $Iscc "/DAppVersion=$Version" "/DSourceExe=$exe" (Join-Path $PSScriptRoot "installer\GoLiveBypass-Instalador.iss")
+& $Iscc "/DAppVersion=$Version" "/DInstallerRev=$Rev" "/DSourceExe=$exe" (Join-Path $PSScriptRoot "installer\GoLiveBypass-Instalador.iss")
 if ($LASTEXITCODE) { throw "ISCC falhou" }
 
-$out = Join-Path $PSScriptRoot "dist\GoLiveBypass-Instalador-$Version.exe"
+$out = Join-Path $PSScriptRoot "dist\GoLiveBypass-Instalador-$Version-r$Rev.exe"
 $hash = (Get-FileHash $out -Algorithm SHA256).Hash.ToLower()
-"$hash  GoLiveBypass-Instalador-$Version.exe" | Out-File -Encoding ascii "$out.sha256"
+"$hash  GoLiveBypass-Instalador-$Version-r$Rev.exe" | Out-File -Encoding ascii "$out.sha256"
 "Instalador: $out"
 "SHA-256:    $hash"
