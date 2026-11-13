@@ -2,12 +2,12 @@
   Gera o instalador do zero, a partir da tag oficial do bezumiya/GoLiveBypass.
 
   Precisa: Git, Node.js 24+, Go 1.26+ e Inno Setup 6 (ISCC.exe).
-  Uso:     powershell -ExecutionPolicy Bypass -File build.ps1 -Version 2.0.16 -Rev 3
+  Uso:     powershell -ExecutionPolicy Bypass -File build.ps1 -Version 2.0.16 -Rev 4
   Saída:   dist\GoLiveBypass-Instalador-<versão>-r<rev>.exe (+ .sha256)
 #>
 param(
   [string]$Version = "2.0.16",
-  [string]$Rev = "3",
+  [string]$Rev = "4",
   [string]$Iscc = "",
   [string]$WorkDir = "$PSScriptRoot\.build"
 )

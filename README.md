@@ -75,7 +75,7 @@ Isso remove o app, os atalhos e a tarefa de inicialização (o Windows pede um "
 ## Instalação silenciosa (pra quem manja)
 
 ```powershell
-GoLiveBypass-Instalador-2.0.16-r3.exe /VERYSILENT /INICIAR=1 /BLOQUEARDISCORD=1
+GoLiveBypass-Instalador-2.0.16-r4.exe /VERYSILENT /INICIAR=1 /BLOQUEARDISCORD=1
 ```
 
 `/INICIAR=1` cria a tarefa de inicialização com o Windows e `/BLOQUEARDISCORD=1` bloqueia o autostart do Discord. O login no Proton continua sendo feito no app. Se o GoLiveBypass estiver aberto, o instalador silencioso sai com código 1 sem mexer em nada.
@@ -85,10 +85,10 @@ GoLiveBypass-Instalador-2.0.16-r3.exe /VERYSILENT /INICIAR=1 /BLOQUEARDISCORD=1
 Precisa de Git, Node.js 24+, Go 1.26+ e [Inno Setup 6](https://jrsoftware.org/isinfo.php).
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File build.ps1 -Version 2.0.16 -Rev 3
+powershell -ExecutionPolicy Bypass -File build.ps1 -Version 2.0.16 -Rev 4
 ```
 
-O script clona a tag `v2.0.16` do repositório oficial, roda `npm ci` e `npm run build:win` (o mesmo build do projeto) e gera `dist\GoLiveBypass-Instalador-2.0.16-r3.exe` com o `.sha256` ao lado.
+O script clona a tag `v2.0.16` do repositório oficial, roda `npm ci` e `npm run build:win` (o mesmo build do projeto) e gera `dist\GoLiveBypass-Instalador-2.0.16-r4.exe` com o `.sha256` ao lado.
 
 ## Versões
 
@@ -98,7 +98,8 @@ Pra saber qual está num PC: **Configurações → Aplicativos** mostra `GoLiveB
 
 | Revisão | Data | App | O que mudou |
 |---|---|---|---|
-| **r3** | 11/11/2026 | 2.0.16 | Fixa a rota medida na primeira ativação. O boot deixa de medir as rotas de novo, e o Firewall para de perguntar sobre `golive-speed-probe.exe` a cada boot. |
+| **r4** | 13/11/2026 | 2.0.16 | Corrige o furo da r3: a janela do app, aberta pelo instalador, media as rotas de novo e desfazia a rota fixa, e o aviso do Firewall voltava. Agora a rota é fixada antes de abrir a janela, e o instalador espera a medição terminar antes de fixar. |
+| r3 | 11/11/2026 | 2.0.16 | Fixa a rota medida na primeira ativação. O boot deixa de medir as rotas de novo, e o Firewall para de perguntar sobre `golive-speed-probe.exe` a cada boot. |
 | r2 | 08/11/2026 | 2.0.16 | Inicialização por tarefa agendada (pede administrador uma vez) no lugar da entrada no registro, que o Windows às vezes pulava. |
 | r1 | 06/11/2026 | 2.0.16 | Primeira versão (publicada no GitHub): atalho "Discord com VPN", inicialização pela chave Run e bloqueio do autostart do Discord. |
 

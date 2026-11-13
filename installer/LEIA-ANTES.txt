@@ -1,5 +1,5 @@
 ﻿GoLiveBypass - instalador NÃO OFICIAL
-Versão: app 2.0.16, instalador r3 (11/11/2026)
+Versão: app 2.0.16, instalador r4 (13/11/2026)
 
 Este instalador coloca o GoLiveBypass (projeto original: github.com/bezumiya/GoLiveBypass, licença GPLv3) no seu PC e cria o atalho "Discord com VPN".
 
@@ -13,6 +13,7 @@ Como vai ser:
    Para mudar depois, rode este instalador de novo. Não use "Iniciar com Windows" da bandeja do GoLiveBypass: o instalador já cuida disso.
 4. O instalador também fixa a rota que o GoLiveBypass escolheu na primeira ativação. Assim, a cada boot ele já sobe nessa melhor rota, sem medir tudo de novo. Se a rota cair, o próprio app troca para outra.
    Na primeira ativação o Firewall do Windows pode perguntar sobre "golive-speed-probe.exe" (é o teste de velocidade das rotas): clique em Permitir. Depois disso ele não pergunta mais.
+   Se o instalador mostrar "medindo a melhor rota", espere terminar (1 a 3 minutos) antes de avançar.
    Se um dia você otimizar a rota pela janela do GoLiveBypass, rode este instalador de novo para fixar a rota nova.
 
 Como funciona a VPN:

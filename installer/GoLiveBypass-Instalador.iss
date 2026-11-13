@@ -17,8 +17,9 @@
 ;   r1 = 06/11/2026 publicado no GitHub, inicialização pela chave Run
 ;   r2 = 08/11/2026 tarefa agendada elevada no lugar da chave Run
 ;   r3 = 11/11/2026 fixa a rota medida na 1ª ativação (sem prompt do firewall a cada boot)
+;   r4 = 13/11/2026 fixa a rota antes de abrir a janela e espera a medição terminar (furo da r3)
 #ifndef InstallerRev
-  #define InstallerRev "3"
+  #define InstallerRev "4"
 #endif
 #define FullVersion AppVersion + "-r" + InstallerRev
 
@@ -102,6 +103,7 @@ var
   BtnAbrir: TNewButton;
   TimerId: LongWord;
   JaPerguntou: Boolean;
+  TicksSemProbe: Integer;
 
 function SetTimer(hWnd, nIDEvent, uElapse, lpTimerFunc: LongWord): LongWord; external 'SetTimer@user32.dll stdcall';
 function KillTimer(hWnd, uIDEvent: LongWord): BOOL; external 'KillTimer@user32.dll stdcall';
@@ -172,6 +174,24 @@ begin
 end;
 
 #include "fixar-rota.iss"
+
+{ A janela do GoLiveBypass, quando abre com a preferência "auto" e a VPN desligada, mede as rotas
+  com o golive-speed-probe.exe (1 a 3 minutos) e no fim grava a preferência como "auto". Fixar a
+  rota enquanto essa medição roda não adianta: ela termina depois e desfaz (era o furo da r3). }
+function ProbeRodando(): Boolean;
+var
+  Locator, Service, Procs: Variant;
+begin
+  Result := False;
+  try
+    Locator := CreateOleObject('WbemScripting.SWbemLocator');
+    Service := Locator.ConnectServer('', 'root\CIMV2', '', '');
+    Procs := Service.ExecQuery('SELECT ProcessId FROM Win32_Process WHERE Name = ''golive-speed-probe.exe''');
+    Result := Procs.Count > 0;
+  except
+    Result := False;
+  end;
+end;
 
 procedure AbrirApp();
 var
@@ -507,17 +527,28 @@ end;
 procedure AtualizarPagina();
 begin
   if JaPerguntou then Exit;
-  if VpnJaAtivada() then
+  if not VpnJaAtivada() then
   begin
-    { Para o timer antes do modal: senão ele dispara de novo enquanto a pergunta está aberta. }
-    PararTimer();
-    PerguntarIniciarAntes();
-  end
-  else
-  begin
+    TicksSemProbe := 0;
     LblStatus.Caption := 'Aguardando você entrar no Proton e clicar em Ativar...';
     LblStatus.Font.Color := clWindowText;
     WizardForm.NextButton.Caption := 'Pular';
+  end
+  else if ProbeRodando() then
+  begin
+    TicksSemProbe := 0;
+    LblStatus.Caption := 'VPN ativada. O GoLiveBypass está medindo a melhor rota (1 a 3 minutos)...';
+    LblStatus.Font.Color := clWindowText;
+    WizardForm.NextButton.Caption := 'Aguarde';
+  end
+  else
+  begin
+    { Dois ciclos seguidos sem medição: a janela pode começar a medir alguns segundos depois de abrir. }
+    TicksSemProbe := TicksSemProbe + 1;
+    if TicksSemProbe < 2 then Exit;
+    { Para o timer antes do modal: senão ele dispara de novo enquanto a pergunta está aberta. }
+    PararTimer();
+    PerguntarIniciarAntes();
   end;
 end;
 
@@ -602,6 +633,14 @@ begin
   Result := True;
   if CurPageID = PaginaLogin.ID then
   begin
+    if VpnJaAtivada() and ProbeRodando() then
+    begin
+      MsgBox('O GoLiveBypass ainda está medindo a melhor rota (leva de 1 a 3 minutos).' + #13#10#13#10 +
+             'Espere a medição terminar: se o instalador fixar a rota agora, a medição desfaz isso quando acabar ' +
+             'e o Windows volta a perguntar sobre o golive-speed-probe.exe a cada boot.', mbInformation, MB_OK);
+      Result := False;
+      Exit;
+    end;
     PararTimer();
     if VpnJaAtivada() then FixarRotaMedida(ExpandConstant('{localappdata}\GoLiveBypass'));
     { As caixinhas valem como estado final: rodar o instalador de novo e desmarcar desliga. }
@@ -628,7 +667,12 @@ begin
       if ExpandConstant('{param:BLOQUEARDISCORD|0}') = '1' then BloquearAutostartDiscord();
     end
     else
+    begin
+      { Quem já tem rota medida (atualização): fixa ANTES de abrir a janela, senão ela abre em "auto"
+        com a VPN desligada e começa a medir tudo de novo. }
+      FixarRotaMedida(ExpandConstant('{localappdata}\GoLiveBypass'));
       AbrirApp();
+    end;
   end;
 end;
 
