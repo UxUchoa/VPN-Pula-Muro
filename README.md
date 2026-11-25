@@ -1,21 +1,121 @@
 <p align="center">
-  <img src="assets/caramelo.png" width="128" alt="Caramelo, o mascote da VPN Pula Muro" />
+  <img src="assets/caramelo.png" width="128" alt="Caramelo, the VPN Pula Muro mascot" />
 </p>
 
 <h1 align="center">VPN Pula Muro</h1>
 
 <p align="center">
-  <b>Liga o PC e o Discord já abre com Go Live e câmera funcionando.</b><br/>
-  A VPN sobe primeiro e o Discord abre já por ela. Sem abrir nada na mão.
+  <b>Turn on the PC and Discord opens with Go Live and camera working.</b><br/>
+  The VPN comes up first and Discord opens through it. Nothing to open by hand.
 </p>
 
 <p align="center">
-  <a href="https://github.com/UxUchoa/VPN-Pula-Muro/releases/latest"><b>⬇️ Baixar a última versão</b></a>
+  <a href="https://github.com/UxUchoa/VPN-Pula-Muro/releases/latest"><b>⬇️ Download the latest version</b></a>
   ·
-  <a href="https://github.com/UxUchoa/VPN-Pula-Muro/issues">🐛 Reportar bug</a>
+  <a href="https://github.com/UxUchoa/VPN-Pula-Muro/issues">🐛 Report a bug</a>
+  ·
+  <a href="#-português">🇧🇷 Leia em português</a>
 </p>
 
 ---
+
+## 🐶 What it is
+
+VPN Pula Muro is a **fork of [GoLiveBypass](https://github.com/bezumiya/GoLiveBypass)**, which routes only Discord through a Proton VPN and brings Go Live and the camera back for users in Brazil. With the original you had to open the bypass, turn on the VPN and only then open Discord, every day. This fork adds **quality-of-life improvements** so that goes away: **you turn on the PC and Discord is already running through the VPN**, no clicks needed.
+
+Everything that does the actual work (Proton login, route selection and per-app VPN) comes from the original project by [bezumiya](https://github.com/bezumiya) and [many contributors](https://github.com/bezumiya/GoLiveBypass#agradecimentos).
+
+## ✨ What's improved
+
+- **Starts with Windows in the right order:** VPN first, then Discord through it, via a scheduled task with admin rights, so Windows asks "Yes" **once** at install and never at boot.
+- **Discord never opens before the VPN:** the installer optionally disables Discord's autostart (the uninstaller restores it), and a **"Discord com VPN"** shortcut turns the VPN on and opens Discord in one click.
+- **Best route pinned:** the route chosen on first activation is fixed, so boot skips re-measuring every route and the Firewall stops asking about `golive-speed-probe.exe`.
+- **Real installer:** installs, opens the app so you can sign in to Proton, asks whether to start before Discord, updates in place without losing the login, auto-updates from this repo's releases and uninstalls cleanly.
+- **Fixes:** ships app 2.0.19, which Proton accepts again (2.0.16 was rejected with error 5003 from 19/11/2026); reopening the app while it runs no longer deletes the Proton helper files.
+- **Our look:** green and yellow, with the caramelo dog in the logo, icon and tray; the bug button saves a diagnostic file (no password or token) and opens an issue here.
+
+All changes to the app code live in a single patch, [`edicao/uxuchoa.patch`](edicao/uxuchoa.patch), applied on top of the official tag.
+
+## 📋 Requirements
+
+Windows 10 or 11 (64-bit), Discord installed and a [Proton](https://account.protonvpn.com/signup) account (free works).
+
+## 💾 Installing
+
+1. Download **`VPN-Pula-Muro-Instalador-x.y.z-rN.exe`** from the [latest release](https://github.com/UxUchoa/VPN-Pula-Muro/releases/latest). It isn't code-signed, so Windows may show *"Windows protected your PC"*: click **More info → Run anyway**.
+2. Install (per-user, no admin needed).
+3. VPN Pula Muro opens by itself: sign in to **Proton**, wait 1–3 minutes for the best route (allow `golive-speed-probe.exe` in the Firewall the first time) and click **Activate** (Windows asks for admin once to install **WireSock**, the VPN engine).
+4. Back in the installer, answer **Yes** to starting before Discord. Keep **Start with Windows** and **Prevent Discord from opening on its own** checked.
+5. **Next → Finish.**
+
+Upgrading from the old GoLiveBypass installer (r1–r4)? Just run the new one on top; it keeps your login.
+
+## 🗓️ Day to day
+
+- **After boot:** wait about 30 seconds; the VPN comes up and Discord opens ready to share your screen.
+- **Open manually:** **Discord com VPN** on the desktop or Start menu.
+- **Close:** right-click the caramelo tray icon → **Exit**. ⚠️ Don't use **Deactivate**: it turns the VPN off for good and Discord won't open at the next boot (fix it with **VPN Pula Muro (configurar)** → **Activate**).
+- **Change account, route or settings:** Start menu → **VPN Pula Muro (configurar)**; run the installer again to pin a newly optimized route.
+
+## ⚙️ How it works
+
+Only **Discord** goes through the VPN (ProtonVPN WireGuard via WireSock); games, browser and everything else stay on your normal connection. Startup is the scheduled task **GoLiveBypass - VPN antes do Discord**: at logon it waits 10 s and runs the app with `--hidden`, which uses your saved Proton session, brings the tunnel up and only then opens Discord. The task runs as admin because the app needs admin to turn the VPN on; as a side effect, Discord opened by it also runs as admin, so dragging files from Explorer into Discord stops working (attaching via the clip still works). Some internal names (`GoLiveBypass.exe`, `%LOCALAPPDATA%\GoLiveBypass`, the task name) stay as in the original so updates keep your login.
+
+## ⚠️ Known issues
+
+- **"Windows protected your PC":** the installer isn't signed; use **More info → Run anyway**.
+- **Microsoft Defender flags `Trojan:Win32/Commando`** on `GoLiveBypass.exe --hidden`: a known false positive from the original project.
+- **Proton rejects the login with code 5003:** fixed from app 2.0.19 (installer r5).
+
+## 🐛 Found a bug?
+
+Use the bug button in the app window: it saves a diagnostic file to Downloads (no password, token or proxy) and opens a pre-filled [issue here](https://github.com/UxUchoa/VPN-Pula-Muro/issues). Please don't open issues about VPN Pula Muro in the original project.
+
+## 🧹 Uninstall
+
+Windows Settings → Apps → **VPN Pula Muro (Discord com VPN)** → Uninstall. It removes the app, shortcuts and startup task and restores Discord's autostart if the installer had blocked it. The Proton login stays in `%LOCALAPPDATA%\GoLiveBypass` (delete it to wipe everything); WireSock stays as a separate app.
+
+## 🤫 Silent install
+
+```powershell
+VPN-Pula-Muro-Instalador-2.0.19-r5.exe /VERYSILENT /INICIAR=1 /BLOQUEARDISCORD=1
+```
+
+`/INICIAR=1` creates the Windows startup task and `/BLOQUEARDISCORD=1` blocks Discord's autostart. Proton login is still done in the app. If the app is open, the silent installer exits with code 1 without changing anything.
+
+## 🔨 Build it yourself
+
+Needs Git, Node.js 24+, Go 1.26+ and [Inno Setup 6](https://jrsoftware.org/isinfo.php).
+
+```powershell
+powershell -ExecutionPolicy Bypass -File build.ps1 -Version 2.0.19 -Rev 5
+```
+
+The script clones tag `v2.0.19` of the [original GoLiveBypass](https://github.com/bezumiya/GoLiveBypass), applies [`edicao/uxuchoa.patch`](edicao/uxuchoa.patch), runs `npm ci` and `npm run build:win` and outputs the installer (`VPN-Pula-Muro-Instalador-2.0.19-r5.exe` + `.sha256`) and the portable app used by the auto-updater (`GoLiveBypass-2.0.19.exe`) to `dist\`.
+
+## 🏷️ Versions
+
+| Revision | Date | App | Changes |
+|---|---|---|---|
+| **r5** | 2026-11-25 | 2.0.19 | Becomes **VPN Pula Muro** (name, colors, caramelo); Proton login fixed (code 5003); Proton helper no longer disappears; bug reports and updates come from this repo. |
+| r4 | 2026-11-13 | 2.0.16 | Pins the route before opening the window and waits for measurement to finish. |
+| r3 | 2026-11-11 | 2.0.16 | Pins the route measured on first activation, so the Firewall stops asking at every boot. |
+| r2 | 2026-11-08 | 2.0.16 | Startup via scheduled task instead of the registry entry Windows sometimes skipped. |
+| r1 | 2026-11-06 | 2.0.16 | First version: "Discord com VPN" shortcut and Discord autostart blocking. |
+
+To check the installed version: **Settings → Apps**, or `reg query HKCU\Software\GoLiveBypass-Instalador /v Versao` (r1 doesn't write it).
+
+## 📜 License and credits
+
+GPLv3, same as the original (see [LICENSE](LICENSE)). **GoLiveBypass** belongs to [bezumiya](https://github.com/bezumiya/GoLiveBypass) and its [contributors](https://github.com/bezumiya/GoLiveBypass#agradecimentos); each release ships the source zip used in the build. **WireSock** and **ProtonVPN** belong to their owners, and VPN Pula Muro isn't affiliated with them or with Discord. The **caramelo** is pixel art made for this project.
+
+---
+
+## 🇧🇷 Português
+
+# VPN Pula Muro
+
+**Liga o PC e o Discord já abre com Go Live e câmera funcionando.** A VPN sobe primeiro e o Discord abre já por ela. Sem abrir nada na mão.
 
 ## 🐶 O que é isso
 
