@@ -1,4 +1,4 @@
-﻿; Instalador não oficial do GoLiveBypass (https://github.com/bezumiya/GoLiveBypass), GPLv3.
+﻿; Instalador da edição UxUchoa do GoLiveBypass (baseada em https://github.com/bezumiya/GoLiveBypass), GPLv3.
 ; Compile com:  ISCC.exe /DAppVersion=2.0.16 /DSourceExe=C:\caminho\GoLiveBypass-2.0.16.exe GoLiveBypass-Instalador.iss
 ; O build.ps1 na raiz do repositório faz tudo (compila o app a partir da tag oficial e chama o ISCC).
 ;
@@ -18,12 +18,14 @@
 ;   r2 = 08/11/2026 tarefa agendada elevada no lugar da chave Run
 ;   r3 = 11/11/2026 fixa a rota medida na 1ª ativação (sem prompt do firewall a cada boot)
 ;   r4 = 13/11/2026 fixa a rota antes de abrir a janela e espera a medição terminar (furo da r3)
+;   r5 = 25/11/2026 app 2.0.19 edição UxUchoa: login Proton (5003) de volta, tema azul, sem Discord,
+;        bugs viram issue no GitHub do UxUchoa e atualizações vêm das releases do UxUchoa
 #ifndef InstallerRev
-  #define InstallerRev "4"
+  #define InstallerRev "5"
 #endif
 #define FullVersion AppVersion + "-r" + InstallerRev
 
-#define AppName "GoLiveBypass"
+#define AppName "VPN Pula Muro"
 #define AppExe "GoLiveBypass.exe"
 #define RunValue "GoLiveBypass"
 #define TaskName "GoLiveBypass - VPN antes do Discord"
@@ -34,15 +36,15 @@
 AppId={{D599304B-B876-4853-AE4F-2127645D818A}
 AppName={#AppName}
 AppVersion={#FullVersion}
-AppVerName={#AppName} {#AppVersion} - instalador r{#InstallerRev} (não oficial)
+AppVerName={#AppName} {#AppVersion} - edição UxUchoa, instalador r{#InstallerRev}
 VersionInfoVersion={#AppVersion}.{#InstallerRev}
 VersionInfoProductVersion={#AppVersion}.{#InstallerRev}
 VersionInfoProductTextVersion={#FullVersion}
-VersionInfoDescription=Instalador não oficial do GoLiveBypass {#FullVersion} (Discord com VPN)
-AppPublisher=Comunidade - build não oficial do bezumiya/GoLiveBypass
-AppPublisherURL=https://github.com/UxUchoa/GoLiveBypass-Instalador
-AppSupportURL=https://github.com/UxUchoa/GoLiveBypass-Instalador/issues
-AppUpdatesURL=https://github.com/UxUchoa/GoLiveBypass-Instalador/releases
+VersionInfoDescription=Instalador da {#AppName} {#FullVersion} (Discord com VPN)
+AppPublisher=UxUchoa - baseada no projeto open source bezumiya/GoLiveBypass
+AppPublisherURL=https://github.com/UxUchoa/VPN-Pula-Muro
+AppSupportURL=https://github.com/UxUchoa/VPN-Pula-Muro/issues
+AppUpdatesURL=https://github.com/UxUchoa/VPN-Pula-Muro/releases
 ; Instala só para o usuário atual: sem pedir administrador.
 PrivilegesRequired=lowest
 DefaultDirName={localappdata}\Programs\{#AppName}
@@ -54,7 +56,7 @@ UninstallDisplayName={#AppName} (Discord com VPN) r{#InstallerRev}
 SetupIconFile=icon.ico
 InfoBeforeFile=LEIA-ANTES.txt
 OutputDir=..\dist
-OutputBaseFilename=GoLiveBypass-Instalador-{#FullVersion}
+OutputBaseFilename=VPN-Pula-Muro-Instalador-{#FullVersion}
 Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
@@ -69,7 +71,7 @@ Name: "ptbr"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"
 ptbr.FinishedLabel=Pronto!%n%nDaqui em diante use o atalho "Discord com VPN": ele liga a VPN e abre o Discord já por ela.%n%nPara fechar use Sair (botão direito no ícone da bandeja). Não use Desativar, senão o atalho não liga a VPN na próxima vez.%n%nPara ligar ou desligar o início com o Windows depois, rode este instalador de novo. Não use a opção "Iniciar com Windows" da bandeja: o instalador já cuida disso.
 
 [Tasks]
-Name: "desktopapp"; Description: "Criar também um atalho do GoLiveBypass (janela de configuração) na área de trabalho"; GroupDescription: "Opções:"; Flags: unchecked
+Name: "desktopapp"; Description: "Criar também um atalho da VPN Pula Muro (janela de configuração) na área de trabalho"; GroupDescription: "Opções:"; Flags: unchecked
 
 [Files]
 Source: "{#SourceExe}"; DestDir: "{app}"; DestName: "{#AppExe}"; Flags: ignoreversion
@@ -78,10 +80,15 @@ Source: "..\LICENSE"; DestDir: "{app}"; DestName: "LICENSE.txt"; Flags: ignoreve
 [Icons]
 ; --hidden: o próprio GoLiveBypass sobe só na bandeja e, se a VPN estava ativa da última vez,
 ; liga o túnel e só depois reabre o Discord por ele.
-Name: "{autodesktop}\Discord com VPN"; Filename: "{app}\{#AppExe}"; Parameters: "--hidden"; WorkingDir: "{app}"; Comment: "Liga a VPN do GoLiveBypass e abre o Discord por ela"
-Name: "{autoprograms}\Discord com VPN"; Filename: "{app}\{#AppExe}"; Parameters: "--hidden"; WorkingDir: "{app}"; Comment: "Liga a VPN do GoLiveBypass e abre o Discord por ela"
-Name: "{autoprograms}\GoLiveBypass (configurar)"; Filename: "{app}\{#AppExe}"; WorkingDir: "{app}"
-Name: "{autodesktop}\GoLiveBypass (configurar)"; Filename: "{app}\{#AppExe}"; WorkingDir: "{app}"; Tasks: desktopapp
+Name: "{autodesktop}\Discord com VPN"; Filename: "{app}\{#AppExe}"; Parameters: "--hidden"; WorkingDir: "{app}"; Comment: "Liga a VPN Pula Muro e abre o Discord por ela"
+Name: "{autoprograms}\Discord com VPN"; Filename: "{app}\{#AppExe}"; Parameters: "--hidden"; WorkingDir: "{app}"; Comment: "Liga a VPN Pula Muro e abre o Discord por ela"
+Name: "{autoprograms}\VPN Pula Muro (configurar)"; Filename: "{app}\{#AppExe}"; WorkingDir: "{app}"
+Name: "{autodesktop}\VPN Pula Muro (configurar)"; Filename: "{app}\{#AppExe}"; WorkingDir: "{app}"; Tasks: desktopapp
+
+[InstallDelete]
+; Atalhos com o nome antigo (r1 a r4), para quem atualiza.
+Type: files; Name: "{autoprograms}\GoLiveBypass (configurar).lnk"
+Type: files; Name: "{autodesktop}\GoLiveBypass (configurar).lnk"
 
 [UninstallDelete]
 Type: files; Name: "{app}\{#AppExe}.old"
@@ -151,7 +158,7 @@ begin
       Result := False;
       Exit;
     end;
-    if MsgBox('O GoLiveBypass está aberto.' + #13#10#13#10 +
+    if MsgBox('A VPN Pula Muro está aberta.' + #13#10#13#10 +
               'Feche ele pelo ícone da bandeja (botão direito > Sair), espere o Discord voltar ao normal ' +
               'e clique em OK para ' + Acao + '.', mbInformation, MB_OKCANCEL) = IDCANCEL then
     begin
@@ -203,7 +210,7 @@ end;
 { ---------- inicialização ---------- }
 
 { A inicialização é uma tarefa do Agendador de Tarefas, não a chave Run. Num PC real o Windows
-  pulou a entrada Run do GoLiveBypass no boot (sem erro nenhum no log) e ainda abriu o Discord
+  pulou a entrada Run da VPN Pula Muro no boot (sem erro nenhum no log) e ainda abriu o Discord
   com o interruptor dele desligado em StartupApproved. A tarefa de logon não depende dessa lista
   e deixa histórico no Agendador. A versão elevada (CriarTarefaAdmin) vai por schtasks /XML com
   "runas", porque registrar tarefa elevada exige administrador; o "--hidden" fica dentro do XML,
@@ -226,7 +233,7 @@ begin
     Folder := Service.GetFolder('\');
     Def := Service.NewTask(0);
     Def.RegistrationInfo.Author := '{#AppName} (instalador)';
-    Def.RegistrationInfo.Description := 'Ao entrar no Windows, sobe o GoLiveBypass na bandeja: ele liga a VPN e só depois abre o Discord por ela.';
+    Def.RegistrationInfo.Description := 'Ao entrar no Windows, sobe a VPN Pula Muro na bandeja: ele liga a VPN e só depois abre o Discord por ela.';
     Def.Principal.UserId := UsuarioAtual();
     Def.Principal.LogonType := 3;            { TASK_LOGON_INTERACTIVE_TOKEN: roda na sessão da pessoa, sem senha }
     Def.Principal.RunLevel := 0;             { TASK_RUNLEVEL_LUA: sem administrador }
@@ -259,7 +266,7 @@ end;
   para subir o WireSock, e pula esse pedido quando já roda como administrador. No boot, aberto
   pela tarefa em segundo plano, o pedido fica piscando na barra de tarefas e a ativação desiste
   depois de 2 minutos. Com a tarefa elevada não há pedido nenhum no boot. Efeito colateral
-  aceito: o Discord, aberto pelo GoLiveBypass, também roda como administrador.
+  aceito: o Discord, aberto pela VPN Pula Muro, também roda como administrador.
   Registrar uma tarefa elevada exige administrador: é o único "Sim" pedido na instalação. }
 
 function XmlEsc(const S: String): String;
@@ -313,7 +320,7 @@ begin
     '<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">' + #13#10 +
     '  <RegistrationInfo>' + #13#10 +
     '    <Author>{#AppName} (instalador)</Author>' + #13#10 +
-    '    <Description>Ao entrar no Windows, sobe o GoLiveBypass na bandeja como administrador: ele liga a VPN sem pedir confirmação e só depois abre o Discord por ela.</Description>' + #13#10 +
+    '    <Description>Ao entrar no Windows, sobe a VPN Pula Muro na bandeja como administrador: ele liga a VPN sem pedir confirmação e só depois abre o Discord por ela.</Description>' + #13#10 +
     '  </RegistrationInfo>' + #13#10 +
     '  <Triggers>' + #13#10 +
     '    <LogonTrigger>' + #13#10 +
@@ -391,7 +398,7 @@ begin
   if RegValueExists(HKCU, RunKey, '{#RunValue}') then
   begin
     RegDeleteValue(HKCU, RunKey, '{#RunValue}');
-    Log('Entrada Run do GoLiveBypass removida');
+    Log('Entrada Run da VPN Pula Muro removida');
   end;
 end;
 
@@ -411,7 +418,7 @@ begin
     Exit;
   end;
   if not WizardSilent() then
-    MsgBox('Sem a permissão de administrador, o GoLiveBypass ainda vai iniciar com o Windows, ' +
+    MsgBox('Sem a permissão de administrador, a VPN Pula Muro ainda vai iniciar com o Windows, ' +
            'mas a cada boot o Windows vai perguntar se ele pode ligar a VPN: clique em Sim quando aparecer ' +
            '(às vezes o pedido fica piscando na barra de tarefas). Para não precisar disso, rode o instalador ' +
            'de novo e aceite o pedido de administrador.', mbInformation, MB_OK);
@@ -500,25 +507,25 @@ begin
   ChkBloquearDiscord.Enabled := True;
   { O modal só deixa a escolha óbvia: o resultado vai para as caixinhas, que a pessoa ainda pode mudar. }
   if MsgBox('A VPN está ativa!' + #13#10#13#10 +
-            'Gostaria que o GoLiveBypass iniciasse antes do Discord quando o Windows ligar?' + #13#10#13#10 +
-            'Se sim: ao ligar o PC, o GoLiveBypass sobe primeiro e liga a VPN, e só depois abre o Discord. ' +
+            'Gostaria que a VPN Pula Muro iniciasse antes do Discord quando o Windows ligar?' + #13#10#13#10 +
+            'Se sim: ao ligar o PC, a VPN Pula Muro sobe primeiro e liga a VPN, e só depois abre o Discord. ' +
             'Você já entra no Discord com o bypass rodando, pronto para compartilhar a tela. ' +
-            '(O Discord deixa de abrir sozinho com o Windows: quem abre ele é o GoLiveBypass.)' + #13#10#13#10 +
-            'O Windows vai pedir permissão de administrador uma vez agora: é para o GoLiveBypass ligar a VPN ' +
+            '(O Discord deixa de abrir sozinho com o Windows: quem abre ele é a VPN Pula Muro.)' + #13#10#13#10 +
+            'O Windows vai pedir permissão de administrador uma vez agora: é para a VPN Pula Muro ligar a VPN ' +
             'no boot sem perguntar nada. Por isso o Discord aberto por ele também roda como administrador.' + #13#10#13#10 +
-            'Se não: o GoLiveBypass não inicia com o Windows. Use o atalho "Discord com VPN" quando quiser.' + #13#10#13#10 +
+            'Se não: a VPN Pula Muro não inicia com o Windows. Use o atalho "Discord com VPN" quando quiser.' + #13#10#13#10 +
             'Dá para mudar nas caixinhas desta tela antes de avançar, ou depois rodando o instalador de novo.',
             mbConfirmation, MB_YESNO) = IDYES then
   begin
     ChkIniciar.Checked := True;
     ChkBloquearDiscord.Checked := True;
-    LblStatus.Caption := 'VPN ativada! O GoLiveBypass vai iniciar antes do Discord.';
+    LblStatus.Caption := 'VPN ativada! A VPN Pula Muro vai iniciar antes do Discord.';
   end
   else
   begin
     ChkIniciar.Checked := False;
     ChkBloquearDiscord.Checked := False;
-    LblStatus.Caption := 'VPN ativada! O GoLiveBypass não vai iniciar com o Windows.';
+    LblStatus.Caption := 'VPN ativada! A VPN Pula Muro não vai iniciar com o Windows.';
   end;
   LblStatus.Font.Color := clGreen;
   WizardForm.NextButton.Caption := SetupMessage(msgButtonNext);
@@ -537,7 +544,7 @@ begin
   else if ProbeRodando() then
   begin
     TicksSemProbe := 0;
-    LblStatus.Caption := 'VPN ativada. O GoLiveBypass está medindo a melhor rota (1 a 3 minutos)...';
+    LblStatus.Caption := 'VPN ativada. A VPN Pula Muro está medindo a melhor rota (1 a 3 minutos)...';
     LblStatus.Font.Color := clWindowText;
     WizardForm.NextButton.Caption := 'Aguarde';
   end
@@ -576,17 +583,17 @@ begin
   Intro.Width := PaginaLogin.SurfaceWidth;
   Intro.Height := ScaleY(84);
   Intro.Caption :=
-    'O GoLiveBypass abriu. Nele:' + #13#10 +
+    'A VPN Pula Muro abriu. Nele:' + #13#10 +
     '1. Entre com a sua conta Proton (a grátis serve).' + #13#10 +
     '2. Clique em Ativar. Na primeira vez o Windows pede administrador para instalar o WireSock (o motor da VPN).' + #13#10 +
-    'Assim que a VPN ligar, o instalador pergunta se o GoLiveBypass deve iniciar antes do Discord.';
+    'Assim que a VPN ligar, o instalador pergunta se a VPN Pula Muro deve iniciar antes do Discord.';
 
   BtnAbrir := TNewButton.Create(PaginaLogin);
   BtnAbrir.Parent := PaginaLogin.Surface;
   BtnAbrir.Top := Intro.Top + Intro.Height + ScaleY(4);
   BtnAbrir.Width := ScaleX(220);
   BtnAbrir.Height := ScaleY(24);
-  BtnAbrir.Caption := 'Abrir o GoLiveBypass de novo';
+  BtnAbrir.Caption := 'Abrir a VPN Pula Muro de novo';
   BtnAbrir.OnClick := @BtnAbrirClick;
 
   LblStatus := TNewStaticText.Create(PaginaLogin);
@@ -599,7 +606,7 @@ begin
   ChkIniciar.Top := LblStatus.Top + ScaleY(26);
   ChkIniciar.Width := PaginaLogin.SurfaceWidth;
   ChkIniciar.Height := ScaleY(20);
-  ChkIniciar.Caption := 'Iniciar com o Windows (o GoLiveBypass liga a VPN e depois abre o Discord)';
+  ChkIniciar.Caption := 'Iniciar com o Windows (a VPN Pula Muro liga a VPN e depois abre o Discord)';
   ChkIniciar.Enabled := False;
 
   ChkBloquearDiscord := TNewCheckBox.Create(PaginaLogin);
@@ -607,7 +614,7 @@ begin
   ChkBloquearDiscord.Top := ChkIniciar.Top + ScaleY(24);
   ChkBloquearDiscord.Width := PaginaLogin.SurfaceWidth;
   ChkBloquearDiscord.Height := ScaleY(20);
-  ChkBloquearDiscord.Caption := 'Impedir o Discord de abrir sozinho com o Windows (ele abre pelo GoLiveBypass)';
+  ChkBloquearDiscord.Caption := 'Impedir o Discord de abrir sozinho com o Windows (ele abre pela VPN Pula Muro)';
   ChkBloquearDiscord.Enabled := False;
 end;
 
@@ -635,7 +642,7 @@ begin
   begin
     if VpnJaAtivada() and ProbeRodando() then
     begin
-      MsgBox('O GoLiveBypass ainda está medindo a melhor rota (leva de 1 a 3 minutos).' + #13#10#13#10 +
+      MsgBox('A VPN Pula Muro ainda está medindo a melhor rota (leva de 1 a 3 minutos).' + #13#10#13#10 +
              'Espere a medição terminar: se o instalador fixar a rota agora, a medição desfaz isso quando acabar ' +
              'e o Windows volta a perguntar sobre o golive-speed-probe.exe a cada boot.', mbInformation, MB_OK);
       Result := False;

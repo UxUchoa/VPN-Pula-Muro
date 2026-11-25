@@ -1,13 +1,13 @@
 <#
-  Gera o instalador do zero, a partir da tag oficial do bezumiya/GoLiveBypass.
+  Gera o instalador do zero: tag oficial do bezumiya/GoLiveBypass + edicao\uxuchoa.patch.
 
   Precisa: Git, Node.js 24+, Go 1.26+ e Inno Setup 6 (ISCC.exe).
-  Uso:     powershell -ExecutionPolicy Bypass -File build.ps1 -Version 2.0.16 -Rev 4
-  Saída:   dist\GoLiveBypass-Instalador-<versão>-r<rev>.exe (+ .sha256)
+  Uso:     powershell -ExecutionPolicy Bypass -File build.ps1 -Version 2.0.19 -Rev 5
+  Saída:   dist\GoLiveBypass-Instalador-<versão>-r<rev>.exe (+ .sha256) e dist\GoLiveBypass-<versão>.exe (portátil, para a release)
 #>
 param(
-  [string]$Version = "2.0.16",
-  [string]$Rev = "4",
+  [string]$Version = "2.0.19",
+  [string]$Rev = "5",
   [string]$Iscc = "",
   [string]$WorkDir = "$PSScriptRoot\.build"
 )
@@ -33,6 +33,9 @@ if (-not (Test-Path $src)) {
   New-Item -ItemType Directory -Force $WorkDir | Out-Null
   git clone --depth 1 --branch "v$Version" https://github.com/bezumiya/GoLiveBypass.git $src
   if ($LASTEXITCODE) { throw "git clone falhou" }
+  # Edição UxUchoa: tema azul, sem Discord, issues e atualizações no GitHub do UxUchoa.
+  git -C $src apply --whitespace=nowarn (Join-Path $PSScriptRoot "edicao\uxuchoa.patch")
+  if ($LASTEXITCODE) { throw "o patch da edição não aplicou na v$Version" }
 }
 
 Push-Location (Join-Path $src "golive-gui")
@@ -49,6 +52,7 @@ if (-not (Test-Path $exe)) { throw "Build não gerou $exe" }
 & $Iscc "/DAppVersion=$Version" "/DInstallerRev=$Rev" "/DSourceExe=$exe" (Join-Path $PSScriptRoot "installer\GoLiveBypass-Instalador.iss")
 if ($LASTEXITCODE) { throw "ISCC falhou" }
 
+Copy-Item $exe (Join-Path $PSScriptRoot "dist\GoLiveBypass-$Version.exe") -Force
 $out = Join-Path $PSScriptRoot "dist\GoLiveBypass-Instalador-$Version-r$Rev.exe"
 $hash = (Get-FileHash $out -Algorithm SHA256).Hash.ToLower()
 "$hash  GoLiveBypass-Instalador-$Version-r$Rev.exe" | Out-File -Encoding ascii "$out.sha256"
