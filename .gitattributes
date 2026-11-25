@@ -1,0 +1,4 @@
+# O patch vai byte a byte (tem imagens e precisa casar com a tag original).
+edicao/*.patch binary
+*.ico binary
+*.png binary
